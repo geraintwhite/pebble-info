@@ -76,7 +76,7 @@ module.exports = function (user, cb) {
         event_str = item.type;
       }
 
-      feed.push(event_str);
+      feed.push({ type: item.type, str: event_str });
     });
     cb(feed);
   });

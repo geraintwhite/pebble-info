@@ -3,80 +3,116 @@ var UI = require('ui'),
     github = require('./github');
 
 
-var menu = new UI.Menu({
-  sections: [{
-    items: [
-      { title: 'Pi System Info' },
-      { title: 'GitHub Feed' }
-    ]
+var selected_item;
+var menu_items = [{
+    title: 'System Info',
+    subtitle: 'Raspberry Pi',
+    func: function () { sysinfo('http://node.dvbris.com/sysinfo?pebble'); }
   }, {
-    title: 'GitHub Listener',
-    items: [
-      { title: 'VPS' },
-      { title: 'Raspberry Pi' }
-    ]
-  }]
-});
+    title: 'GitHub Feed',
+    subtitle: 'grit96',
+    func: function () { github_feed(); }
+  }, {
+    title: 'Github Listener',
+    subtitle: 'VPS',
+    func: function () { ghl('http://git.geraintwhite.co.uk/?refresh'); }
+  }, {
+    title: 'Github Listener',
+    subtitle: 'Raspberry Pi',
+    func: function () { ghl('http://git.dvbris.com/?refresh'); }
+}];
 
-var card = new UI.Card({
-  title: 'System Info',
-  subtitle: 'Fetching...',
-  scrollable: true
-});
+var menu = new UI.Menu();
+menu.items(0, menu_items);
+
+var loading_card = (function () {
+  var card = new UI.Card({ subtitle: 'Fetching...' });
+  return {
+    show: function (title) {
+      card.title(title);
+      card.show();
+    }, hide: function () { card.hide(); }
+  };
+})();
+var data_card = (function () {
+  var card = new UI.Card({ scrollable: true });
+  card.on('click', 'select', function (e) {
+    selected_item.func();
+  });
+  return {
+    show: function (title, subtitle, body) {
+      card.title(title);
+      card.subtitle(subtitle);
+      card.body(body || '');
+      card.show();
+    }, hide: function () { card.hide(); }
+  };
+})();
 
 menu.on('select', function (e) {
   console.log(e.itemIndex);
-  console.log(e.sectionIndex);
-
-  switch (e.sectionIndex) {
-    case 0:
-      switch (e.itemIndex) {
-        case 0:
-          // Pi System Info
-          break;
-        case 1:
-          github_feed();
-          break;
-      }
-      break;
-    case 1:
-      break;
-  }
+  selected_item = menu_items[e.itemIndex];
+  selected_item.func();
 });
 
 menu.show();
 
 
 function github_feed () {
-  card.show();
-  card.title('Github Feed');
+  loading_card.show(selected_item.title);
 
-  var user = 'grit96';
-  github(user, function (feed) {
+  github(selected_item.subtitle, function (feed) {
     console.log(feed);
-    card.subtitle();
-    card.body(feed.join('\n\n'));
+    
+    var feed_list = new UI.Menu({ title: 'Github Feed' });
+    var items = [];
+    feed.forEach(function (feed_item) {
+      items.push({ title: feed_item.type, subtitle: feed_item.str });
+    });
+    feed_list.items(0, items);
+    feed_list.show();
+
+    loading_card.hide();
   });
 }
 
+function sysinfo (url) {
+  loading_card.show(selected_item.title);
 
-// card.on('click', 'select', function (e) {
-//   console.log('show menu');
-//   menu.show();
-// });
+  ajax({
+    url: url,
+    type: 'json'
+  }, function (data) {
+    console.log(data);
+    data_card.show(selected_item.title, selected_item.subtitle, data.content);
+    loading_card.hide();
 
-// function update_sysinfo () {
-//   ajax({
-//     url: 'http://node.dvbris.com/sysinfo?pebble',
-//     type: 'json'
-//   }, function (data) {
-//     console.log(data);
-//     card.subtitle('Raspberry Pi');
-//     card.body(data.content);
-//   }, function (err) {
-//     console.log(err);
-//     card.subtitle('Failed to fetch data');
-//   });
-// }
+  }, function (err) {
+    console.log(err);
+    data_card.show(selected_item.title, 'Failed to fetch data');
+    loading_card.hide();
+  });
+}
 
-// update_sysinfo();
+function ghl (url) {
+  loading_card.show(selected_item.title);
+  
+  ajax({
+    url: url,
+    type: 'json'
+  }, function (data) {
+    console.log(data);
+    
+    var body = 'Committer: ' + data.last_payload.head_commit.author.name +
+        '\nCommit: ' + data.last_payload.head_commit.message +
+        '\nRepository: ' + data.last_payload.repository.full_name;
+
+    data_card.show(selected_item.title, selected_item.subtitle, body);
+    loading_card.hide();
+
+  }, function (err) {
+    console.log(err);
+    data_card.show(selected_item.title, 'Failed to fetch data');
+    loading_card.hide();
+  });
+}
