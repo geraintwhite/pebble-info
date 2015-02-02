@@ -67,7 +67,7 @@ function github_feed () {
     var feed_list = new UI.Menu({ title: 'Github Feed' });
     var items = [];
     feed.forEach(function (feed_item) {
-      items.push({ title: feed_item.type, subtitle: feed_item.str });
+      items.push({ title: feed_item.event, subtitle: feed_item.repo });
     });
     feed_list.items(0, items);
     feed_list.show();
