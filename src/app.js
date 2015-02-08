@@ -63,6 +63,11 @@ function github_feed () {
 
   github(selected_item.subtitle, function (feed) {
     console.log(feed);
+    if (!feed) {
+      data_card.show(selected_item.title, 'Failed to fetch data');
+      loading_card.hide();
+      return;
+    }
     
     var feed_list = new UI.Menu({ title: 'Github Feed' });
     var items = [];
@@ -84,6 +89,11 @@ function sysinfo (url) {
     type: 'json'
   }, function (data) {
     console.log(data);
+    if (!data) {
+      data_card.show(selected_item.title, 'Failed to fetch data');
+      loading_card.hide();
+      return;
+    }
     data_card.show(selected_item.title, selected_item.subtitle, data.content);
     loading_card.hide();
 
@@ -102,7 +112,12 @@ function ghl (url) {
     type: 'json'
   }, function (data) {
     console.log(data);
-    
+    if (!data) {
+      data_card.show(selected_item.title, 'Failed to fetch data');
+      loading_card.hide();
+      return;
+    }
+
     var body = 'Committer: ' + data.last_payload.head_commit.author.name +
         '\nCommit: ' + data.last_payload.head_commit.message +
         '\nRepository: ' + data.last_payload.repository.full_name;

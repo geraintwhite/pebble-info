@@ -9,6 +9,7 @@ function github_req(user, cb) {
     cb(data);
   }, function (err) {
     console.log(err);
+    cb();
   });
 }
 
