@@ -25,28 +25,48 @@ var menu_items = [{
 var menu = new UI.Menu();
 menu.items(0, menu_items);
 
-var loading_card = (function () {
-  var card = new UI.Card({ subtitle: 'Fetching...' });
-  return {
-    show: function (title) {
-      card.title(title);
-      card.show();
-    }, hide: function () { card.hide(); }
+
+var screen = (function () {
+  var screen = {};
+
+  var loading_card = (function () {
+    var card = new UI.Card({ subtitle: 'Fetching...' });
+    return {
+      show: function (title) {
+        card.title(title);
+        card.show();
+      }, hide: function () { card.hide(); }
+    };
+  })();
+
+  var data_card = (function () {
+    var card = new UI.Card({ scrollable: true });
+    card.on('click', 'select', function (e) {
+      selected_item.func();
+    });
+    return {
+      show: function (title, subtitle, body) {
+        card.title(title);
+        card.subtitle(subtitle);
+        card.body(body || '');
+        card.show();
+      }, hide: function () { card.hide(); }
+    };
+  })();
+  
+  screen.load = function () { loading_card.show(selected_item.title); };
+  screen.hide = function () { loading_card.hide(); };
+  screen.data = function (data) {
+    data_card.show(selected_item.title, selected_item.subtitle, data);
+    loading_card.hide();
   };
-})();
-var data_card = (function () {
-  var card = new UI.Card({ scrollable: true });
-  card.on('click', 'select', function (e) {
-    selected_item.func();
-  });
-  return {
-    show: function (title, subtitle, body) {
-      card.title(title);
-      card.subtitle(subtitle);
-      card.body(body || '');
-      card.show();
-    }, hide: function () { card.hide(); }
+  screen.err = function () {
+    data_card.show(selected_item.title, 'Failed to fetch data');
+    loading_card.hide();
   };
+
+  return screen;
+
 })();
 
 menu.on('select', function (e) {
@@ -59,15 +79,11 @@ menu.show();
 
 
 function github_feed () {
-  loading_card.show(selected_item.title);
+  screen.load();
 
   github(selected_item.subtitle, function (feed) {
     console.log(feed);
-    if (!feed) {
-      data_card.show(selected_item.title, 'Failed to fetch data');
-      loading_card.hide();
-      return;
-    }
+    if (!feed) return screen.err();
     
     var feed_list = new UI.Menu({ title: 'Github Feed' });
     var items = [];
@@ -77,57 +93,45 @@ function github_feed () {
     feed_list.items(0, items);
     feed_list.show();
 
-    loading_card.hide();
+    screen.hide();
   });
 }
 
 function sysinfo (url) {
-  loading_card.show(selected_item.title);
+  screen.load();
 
   ajax({
     url: url,
     type: 'json'
   }, function (data) {
     console.log(data);
-    if (!data) {
-      data_card.show(selected_item.title, 'Failed to fetch data');
-      loading_card.hide();
-      return;
-    }
-    data_card.show(selected_item.title, selected_item.subtitle, data.content);
-    loading_card.hide();
+    if (!data) return screen.err();
+    screen.data(data.content);
 
   }, function (err) {
     console.log(err);
-    data_card.show(selected_item.title, 'Failed to fetch data');
-    loading_card.hide();
+    screen.err();
   });
 }
 
 function ghl (url) {
-  loading_card.show(selected_item.title);
+  screen.load();
   
   ajax({
     url: url,
     type: 'json'
   }, function (data) {
     console.log(data);
-    if (!data) {
-      data_card.show(selected_item.title, 'Failed to fetch data');
-      loading_card.hide();
-      return;
-    }
+    if (!Object.keys(data.last_payload).length) return screen.err();
 
     var body = 'Committer: ' + data.last_payload.head_commit.author.name +
         '\nCommit: ' + data.last_payload.head_commit.message +
         '\nRepository: ' + data.last_payload.repository.full_name;
 
-    data_card.show(selected_item.title, selected_item.subtitle, body);
-    loading_card.hide();
+    screen.data(body);
 
   }, function (err) {
     console.log(err);
-    data_card.show(selected_item.title, 'Failed to fetch data');
-    loading_card.hide();
+    screen.err();
   });
 }
