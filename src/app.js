@@ -41,7 +41,7 @@ var screen = (function () {
 
   var data_card = (function () {
     var card = new UI.Card({ scrollable: true });
-    card.on('click', 'select', function (e) {
+    card.on('click', 'select', function () {
       selected_item.func();
     });
     return {
@@ -88,9 +88,17 @@ function github_feed () {
     var feed_list = new UI.Menu({ title: 'Github Feed' });
     var items = [];
     feed.forEach(function (feed_item) {
-      items.push({ title: feed_item.event, subtitle: feed_item.repo });
+      var card = new UI.Card({ scrollable: true })
+                     .subtitle(feed_item.subtitle)
+                     .body('\n'+feed_item.body);
+
+      items.push({ title: feed_item.event, subtitle: feed_item.repo, card: card });
     });
     feed_list.items(0, items);
+    feed_list.on('select', function (e) {
+      console.log(e.itemIndex);
+      items[e.itemIndex].card.show();
+    });
     feed_list.show();
 
     screen.hide();
