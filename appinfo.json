@@ -31,6 +31,7 @@
             }
         ]
     },
+    "sdkVersion": "3",
     "shortName": "Pebble Info",
     "uuid": "4b8edaa2-a99e-4784-8b1a-fc257d2e6c1b",
     "versionCode": 1,

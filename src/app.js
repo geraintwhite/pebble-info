@@ -11,7 +11,7 @@ var menu_items = [{
   }, {
     title: 'GitHub Feed',
     subtitle: 'grit96',
-    func: function () { github_feed(); }
+    func: function () { github_feed('grit96'); }
   }, {
     title: 'Github Listener',
     subtitle: 'VPS',
@@ -78,10 +78,10 @@ menu.on('select', function (e) {
 menu.show();
 
 
-function github_feed () {
+function github_feed (username) {
   screen.load();
 
-  github(selected_item.subtitle, function (feed) {
+  github(username, function (feed) {
     console.log(feed);
     if (!feed) return screen.err();
     
