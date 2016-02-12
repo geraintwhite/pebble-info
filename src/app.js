@@ -15,11 +15,11 @@ var menu_items = [{
   }, {
     title: 'Github Listener',
     subtitle: 'VPS',
-    func: function () { ghl('http://git.geraintwhite.co.uk/?refresh'); }
+    func: function () { ghl('http://git.geraintwhite.co.uk/status'); }
   }, {
     title: 'Github Listener',
     subtitle: 'Raspberry Pi',
-    func: function () { ghl('http://git.dvbris.com/?refresh'); }
+    func: function () { ghl('http://git.dvbris.com/status'); }
 }];
 
 var menu = new UI.Menu();
@@ -130,11 +130,11 @@ function ghl (url) {
     type: 'json'
   }, function (data) {
     console.log(data);
-    if (!Object.keys(data.last_payload).length) return screen.err();
+    if (data.current.empty) return screen.err();
 
-    var body = 'Committer: ' + data.last_payload.head_commit.author.name +
-        '\nCommit: ' + data.last_payload.head_commit.message +
-        '\nRepository: ' + data.last_payload.repository.full_name;
+    var body = 'Status: ' + data.status +
+        '\nCommit: ' + data.current.data.commit +
+        '\nRepository: ' + data.current.data.slug;
 
     screen.data(body);
 
